@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/EPA141A.iml" filepath="$PROJECT_DIR$/.idea/EPA141A.iml" />
+      <module fileurl="file://$USER_HOME$/PycharmProjects/epa141A_open/.idea/epa141A_open.iml" filepath="$USER_HOME$/PycharmProjects/epa141A_open/.idea/epa141A_open.iml" />
     </modules>
   </component>
 </project>
