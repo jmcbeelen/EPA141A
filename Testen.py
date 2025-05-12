@@ -4,5 +4,5 @@ def print_hallo():
 print_hallo()
 
 def print_hee():
-    print("Hee")
+    print("Hee latenwe gaan pinballen")
 print_hee()
