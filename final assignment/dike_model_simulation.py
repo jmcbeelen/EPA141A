@@ -5,13 +5,12 @@ from ema_workbench.em_framework.samplers import sample_uncertainties
 from ema_workbench.util import ema_logging
 import time
 from problem_formulation import get_model_for_problem_formulation
-import numpy as np
 
 
 if __name__ == "__main__":
     ema_logging.log_to_stderr(ema_logging.INFO)
 
-    dike_model, planning_steps = get_model_for_problem_formulation(5)
+    dike_model, planning_steps = get_model_for_problem_formulation(4)
 
     # Build a user-defined scenario and policy:
     reference_values = {
@@ -47,55 +46,22 @@ if __name__ == "__main__":
 
     policy0 = Policy("Policy 0", **pol0)
 
-   #  Call random scenarios or policies:
-   #     n_scenarios = 5
-   #     scenarios = sample_uncertainties(dike_model, 50)
-    policies = 10
+    # Call random scenarios or policies:
+    #    n_scenarios = 5
+    #    scenarios = sample_uncertainties(dike_model, 50)
+    #    n_policies = 10
 
-   #  single run
-   #     start = time.time()
-   #     dike_model.run_model(ref_scenario, policy0)
-   #     end = time.time()
-   #     print(end - start)
-   #     results = dike_model.outcomes_output
+    # single run
+    #    start = time.time()
+    #    dike_model.run_model(ref_scenario, policy0)
+    #    end = time.time()
+    #    print(end - start)
+    #    results = dike_model.outcomes_output
 
     # series run
     experiments, outcomes = perform_experiments(dike_model, ref_scenario, 5)
 
 # multiprocessing
- #   with MultiprocessingEvaluator(dike_model) as evaluator:
-  #     results = evaluator.perform_experiments(scenarios=10, policies=policy0, uncertainty_sampling='sobol')
-
-
-
-
-
-
-# Save experiments and outcomes to CSV
-import pandas as pd
-
-if __name__ == "__main__":
-    # other setup code here...
-
-    with MultiprocessingEvaluator(dike_model) as evaluator:
-        results = evaluator.perform_experiments(scenarios=1, policies=policies)
-
-        # Save experiments and outcomes to CSV
-        experiments, outcomes = results
-
-        # Save experiments
-        experiments.to_csv("experiments.csv", index=False)
-
-        # Process outcomes: flatten multidimensional arrays
-        flat_outcomes = {}
-        for key, value in outcomes.items():
-            value = np.array(value)
-            if value.ndim == 1:
-                flat_outcomes[key] = value
-            else:
-                # Flatten each dimension into separate columns
-                for i in range(value.shape[1]):
-                    flat_outcomes[f"{key}_{i}"] = value[:, i]
-
-        outcomes_df = pd.DataFrame(flat_outcomes)
-        outcomes_df.to_csv("outcomes.csv", index=False)
+#    with MultiprocessingEvaluator(dike_model) as evaluator:
+#        results = evaluator.perform_experiments(scenarios=10, policies=policy0,
+#                                                uncertainty_sampling='sobol')
