@@ -20,19 +20,33 @@ if __name__ == "__main__":
     model, _ = get_model_for_problem_formulation(4)
 
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
-        experiments, outcomes = evaluator.perform_experiments(scenarios=100, policies=3)
-
-    # Now you can visualize or analyze results
-    print(experiments.head())
-
-    #fig, axes = pairs_plotting.pairs_scatter(experiments, outcomes, group_by="policy", legend=False)
-    #fig.set_size_inches(8, 8)
-    #plt.show()
+        experiments, outcomes = evaluator.perform_experiments(scenarios=10, policies=10)
 
     x = experiments
     y = outcomes
 
-    fs = feature_scoring.get_feature_scores_all(x, y)
-    sns.heatmap(fs, cmap="viridis", annot=True)
+    # --- Visualization 1: Pairwise scatterplot grouped by policy ---
+    fig, axes = pairs_plotting.pairs_scatter(x, y, group_by="policy", legend=False)
+    fig.set_size_inches(8, 8)
+    fig.set_constrained_layout(True)
     plt.show()
+
+    # Calculate feature importance scores for all outcomes
+    # --- Step 1: Compute feature importance scores ---
+    x_clean = x.drop(columns=["policy"], errors="ignore")
+    fs = feature_scoring.get_feature_scores_all(x, y)
+
+    lever_names = [l.name for l in model.levers]
+    fs_uncertainties_only = fs.drop(index=lever_names, errors="ignore")
+
+    # --- Step 3: Plot heatmap ---
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(fs_uncertainties_only, cmap="viridis", annot=True, fmt=".3f")
+    plt.title("Feature Importance Scores ")
+    plt.xlabel("Outcomes")
+    plt.ylabel("Uncertainties")
+    plt.tight_layout()
+    plt.show()
+
+
 
