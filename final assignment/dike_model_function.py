@@ -317,4 +317,71 @@ class DikeNetwork:
             data[f"RfR Total Costs"].append(G.nodes[f"RfR_projects {s}"]["cost"])
             data[f"Expected Evacuation Costs"].append(np.sum(EECosts))
 
+        #hier begint h
+
+        # Bereken HRI en GRSI per dijkring, en systeem-breed
+
+        rfr_year_weights = {0: 1.0, 1: 0.75, 2: 0.5, 3: 0.25}
+        max_rfr = 5
+        max_fat = 5
+        max_dike = 10
+        w1, w2, w3, w4 = 1, 1, 1, 1
+
+        # Berekeningen per dijk
+        for dike in self.dikelist:
+            total_dike_increase = 0
+            rfr_coverage = 0
+            fat = 0
+            ead = 0
+
+            for s in self.planning_steps:
+                node = G.nodes[dike]
+                total_dike_increase += node[f"DikeIncrease {s}"]
+
+                for rfr_node in G.nodes:
+                    if rfr_node.startswith("RfR_projects"):
+                        step_num = int(rfr_node.split(" ")[-1])
+                        cost = G.nodes[rfr_node]["cost"]
+                        if cost > 0:
+                            rfr_coverage += 1
+                            fat += rfr_year_weights.get(step_num, 0)
+
+            # Pak alleen schade voor deze dijk
+            if f"{dike}_Expected Annual Damage" in data:
+                ead = data[f"{dike}_Expected Annual Damage"][-1]
+            flood_penalty = 1 if ead > 1e7 else 0
+
+            # Normaliseer en bereken HRI
+            hri = (
+                    w1 * (rfr_coverage / max_rfr)
+                    + w2 * (fat / max_fat)
+                    - w3 * (total_dike_increase / max_dike)
+                    - w4 * flood_penalty
+            )
+            data[f"{dike}_Hydrological Resilience Index"] = hri
+
+            # Bereken GRSI per dijk
+            inflow = np.sum(G.nodes[dike]["Qin"]) if "Qin" in G.nodes[dike] else 0
+            outflow = np.sum(G.nodes[dike]["Qout"]) if "Qout" in G.nodes[dike] else 0
+            breach = np.sum(G.nodes[dike]["Qpol"]) if "Qpol" in G.nodes[dike] else 0
+
+            if inflow > 0:
+                grsi = (inflow - (outflow + breach)) / inflow
+            else:
+                grsi = 0
+
+            data[f"{dike}_Groundwater Recharge Support Index"] = grsi
+
+        # === Systeem-brede HRI ===
+        all_hris = [data[f"{dike}_Hydrological Resilience Index"] for dike in self.dikelist if
+                    f"{dike}_Hydrological Resilience Index" in data]
+        data["Hydrological Resilience Index"] = np.mean(all_hris) if all_hris else 0
+
+        # === Systeem-brede GRSI ===
+        all_grsi = [data[f"{dike}_Groundwater Recharge Support Index"] for dike in self.dikelist if
+                    f"{dike}_Groundwater Recharge Support Index" in data]
+        data["Groundwater Recharge Support Index"] = np.mean(all_grsi) if all_grsi else 0
+
         return data
+
+

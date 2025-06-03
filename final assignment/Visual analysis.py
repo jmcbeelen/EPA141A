@@ -17,7 +17,7 @@ from ema_workbench.analysis import feature_scoring
 ema_logging.log_to_stderr(ema_logging.INFO)
 
 if __name__ == "__main__":
-    model, _ = get_model_for_problem_formulation(1)
+    model, _ = get_model_for_problem_formulation(3)
 
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
         experiments, outcomes = evaluator.perform_experiments(scenarios=10, policies=10)
@@ -48,7 +48,13 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
-    print(experiments.loc[0])
+    print("HRI eerste 10 waarden:", outcomes["Groundwater Recharge Support Index"][:10])
+    print("Gemiddelde HRI:", np.mean(outcomes["Groundwater Recharge Support Index"]))
+    print("Min/max HRI:", np.min(outcomes["Groundwater Recharge Support Index"]),
+          np.max(outcomes["Groundwater Recharge Support Index"]))
+    print(outcomes.keys())
+
+
 
 
 
