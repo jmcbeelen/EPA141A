@@ -11,7 +11,7 @@ from problem_formulation import get_model_for_problem_formulation
 if __name__ == "__main__":
 
     # --- Load model and define zero policy ---
-    model, planning_steps = get_model_for_problem_formulation(1)
+    model, planning_steps = get_model_for_problem_formulation(2)
 
     zero_policy_dict = {lever.name: 0 for lever in model.levers}
     zero_policy = Policy("zero_policy", **zero_policy_dict)
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         )
 
     # --- Analyze an outcome (e.g. Expected Annual Damage) ---
-    Y = outcomes["Expected Annual Damage"]
+    Y = outcomes["Hydrological Resilience Index"]
 
     Si = sobol.analyze(problem, Y, calc_second_order=True, print_to_console=True)
 

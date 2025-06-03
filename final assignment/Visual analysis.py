@@ -17,7 +17,7 @@ from ema_workbench.analysis import feature_scoring
 ema_logging.log_to_stderr(ema_logging.INFO)
 
 if __name__ == "__main__":
-    model, _ = get_model_for_problem_formulation(4)
+    model, _ = get_model_for_problem_formulation(1)
 
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
         experiments, outcomes = evaluator.perform_experiments(scenarios=10, policies=10)
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # Calculate feature importance scores for all outcomes
     # --- Step 1: Compute feature importance scores ---
     x_clean = x.drop(columns=["policy"], errors="ignore")
-    fs = feature_scoring.get_feature_scores_all(x, y)
+    fs = feature_scoring.get_feature_scores_all(x_clean, y)
 
     lever_names = [l.name for l in model.levers]
     fs_uncertainties_only = fs.drop(index=lever_names, errors="ignore")
@@ -47,6 +47,9 @@ if __name__ == "__main__":
     plt.ylabel("Uncertainties")
     plt.tight_layout()
     plt.show()
+
+    print(experiments.loc[0])
+
 
 
 

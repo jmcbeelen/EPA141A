@@ -34,6 +34,14 @@ def sum_over_time(*args):
     return summed
 
 
+def compute_HRI(*args):
+    eads = np.array(args)
+    hri = 1 - np.clip(eads / 1e7, 0, 1)  # Normalize and invert, cap at 1
+    return hri.mean()
+
+
+
+
 def get_model_for_problem_formulation(problem_formulation_id):
     """Convenience function to prepare DikeNetwork in a way it can be input in the EMA-workbench.
     Specify uncertainties, levers, and outcomes of interest.
@@ -212,6 +220,14 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 function=sum_over,
                 kind=direction,
             ),
+            # Dit stukje is voor de nieuwe berekening:
+            ScalarOutcome(
+                "Hydrological Resilience Index",
+                variable_name=[f"{dike}_Expected Annual Damage" for dike in function.dikelist],
+                function=compute_HRI,
+                kind=ScalarOutcome.MAXIMIZE,
+            )
+
         ]
 
     # 5-objectives PF:
@@ -265,6 +281,13 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 function=sum_over,
                 kind=direction,
             ),
+            # Dit stukje is voor de nieuwe berekening:
+            ScalarOutcome(
+                "Hydrological Resilience Index",
+                variable_name=[f"{dike}_Expected Annual Damage" for dike in function.dikelist],
+                function=compute_HRI,
+                kind=ScalarOutcome.MAXIMIZE,
+            )
         ]
 
     # Disaggregate over locations:
@@ -293,6 +316,16 @@ def get_model_for_problem_formulation(problem_formulation_id):
                     kind=direction,
                 )
             )
+            # Dit stukje is voor de nieuwe berekening:
+            outcomes.append(
+                ScalarOutcome(
+                    f"{dike}_Hydrological Resilience Index",
+                    variable_name=[f"{dike}_Expected Annual Damage"],
+                    function=compute_HRI,
+                    kind=ScalarOutcome.MAXIMIZE,
+                )
+            )
+            # tot hier
 
         outcomes.append(
             ScalarOutcome(
@@ -346,6 +379,14 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 function=sum_over_time,
             )
         )
+        # Dit stukje is voor de nieuwe berekening:
+        outcomes.append(
+            ArrayOutcome(
+                "Hydrological Resilience Index",
+                variable_name=[f"{dike}_Expected Annual Damage" for dike in function.dikelist],
+                function=compute_HRI,
+            )
+        )
 
         outcomes.append(ArrayOutcome(f"RfR Total Costs"))
         outcomes.append(ArrayOutcome(f"Expected Evacuation Costs"))
@@ -368,6 +409,14 @@ def get_model_for_problem_formulation(problem_formulation_id):
 
         outcomes.append(ArrayOutcome("RfR Total Costs"))
         outcomes.append(ArrayOutcome("Expected Evacuation Costs"))
+        outcomes.append(
+            ArrayOutcome(
+                f"{dike}_Hydrological Resilience Index",
+                variable_name=[f"{dike}_Expected Annual Damage"],
+                function=compute_HRI,
+            )
+        )
+
         dike_model.outcomes = outcomes
 
     else:
@@ -378,3 +427,5 @@ def get_model_for_problem_formulation(problem_formulation_id):
 
 if __name__ == "__main__":
     get_model_for_problem_formulation(3)
+
+
