@@ -360,27 +360,32 @@ class DikeNetwork:
             )
             data[f"{dike}_Hydrological Resilience Index"] = hri
 
-            # Bereken GRSI per dijk
-            inflow = np.sum(G.nodes[dike]["Qin"]) if "Qin" in G.nodes[dike] else 0
-            outflow = np.sum(G.nodes[dike]["Qout"]) if "Qout" in G.nodes[dike] else 0
-            breach = np.sum(G.nodes[dike]["Qpol"]) if "Qpol" in G.nodes[dike] else 0
 
-            if inflow > 0:
-                grsi = (inflow - (outflow + breach)) / inflow
-            else:
-                grsi = 0
 
-            data[f"{dike}_Groundwater Recharge Support Index"] = grsi
 
         # === Systeem-brede HRI ===
         all_hris = [data[f"{dike}_Hydrological Resilience Index"] for dike in self.dikelist if
                     f"{dike}_Hydrological Resilience Index" in data]
         data["Hydrological Resilience Index"] = np.mean(all_hris) if all_hris else 0
 
-        # === Systeem-brede GRSI ===
-        all_grsi = [data[f"{dike}_Groundwater Recharge Support Index"] for dike in self.dikelist if
-                    f"{dike}_Groundwater Recharge Support Index" in data]
-        data["Groundwater Recharge Support Index"] = np.mean(all_grsi) if all_grsi else 0
+        # === Totale uitstroom per dijk ===
+        for dike in self.dikelist:
+            Qin = G.nodes[dike].get("Qin", [])
+            Qout = G.nodes[dike].get("Qout", [])
+            Qpol = G.nodes[dike].get("Qpol", [])
+
+            total_Qin = np.sum(Qin)
+            total_Qout = np.sum(Qout)
+            total_Qpol = np.sum(Qpol)
+
+            data[f"{dike}_Total Inflow"] = total_Qin
+            data[f"{dike}_Total Outflow"] = total_Qout
+            data[f"{dike}_Total Breach Flow"] = total_Qpol
+
+        # === Systeem-breed totaal (optioneel) ===
+        data["System Total Inflow"] = sum([data[f"{d}_Total Inflow"] for d in self.dikelist])
+        data["System Total Outflow"] = sum([data[f"{d}_Total Outflow"] for d in self.dikelist])
+        data["System Total Breach Flow"] = sum([data[f"{d}_Total Breach Flow"] for d in self.dikelist])
 
         return data
 

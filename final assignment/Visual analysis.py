@@ -17,7 +17,7 @@ from ema_workbench.analysis import feature_scoring
 ema_logging.log_to_stderr(ema_logging.INFO)
 
 if __name__ == "__main__":
-    model, _ = get_model_for_problem_formulation(3)
+    model, _ = get_model_for_problem_formulation(1)
 
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
         experiments, outcomes = evaluator.perform_experiments(scenarios=10, policies=10)

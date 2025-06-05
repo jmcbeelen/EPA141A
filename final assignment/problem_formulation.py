@@ -223,11 +223,6 @@ def get_model_for_problem_formulation(problem_formulation_id):
             ScalarOutcome(
                 "Hydrological Resilience Index",
                 kind=ScalarOutcome.MAXIMIZE,
-            ),
-            ScalarOutcome(
-                "Groundwater Recharge Support Index",
-                kind=ScalarOutcome.MAXIMIZE,
-
             )
 
         ]
@@ -286,10 +281,6 @@ def get_model_for_problem_formulation(problem_formulation_id):
             ScalarOutcome(
                 "Hydrological Resilience Index",
                 kind=ScalarOutcome.MAXIMIZE,
-            ),
-            ScalarOutcome(
-                "Groundwater Recharge Support Index",
-                kind=ScalarOutcome.MAXIMIZE,
             )
 
         ]
@@ -330,14 +321,6 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 )
             )
 
-            outcomes.append(
-                ScalarOutcome(
-                    f"{dike}_Groundwater Recharge Support Index",
-                    variable_name=f"{dike}_Groundwater Recharge Support Index",
-                    function=sum_over,
-                    kind=ScalarOutcome.MAXIMIZE,
-                )
-            )
 
 
             # tot hier
