@@ -378,6 +378,26 @@ def get_model_for_problem_formulation(problem_formulation_id):
             )
         )
 
+        #ADDED, for time series outcomes
+
+        hri_keys = [f"{d}_Hydrological Resilience Index"
+                    for d in function.dikelist]
+        hri_keys.append("Hydrological Resilience Index (system)")
+
+        # Verwijder eventueel het oude HRI-outcome
+        outcomes = [o for o in outcomes
+                          if o.name != "Hydrological Resilience Index"]
+
+        outcomes.append(
+            ArrayOutcome(
+                "Hydrological Resilience Index",
+                variable_name=hri_keys,
+                shape=(len(hri_keys), 3),
+                dtype=np.float64,
+                function=sum_over_time
+            )
+        )
+
 
 
         outcomes.append(ArrayOutcome(f"RfR Total Costs"))

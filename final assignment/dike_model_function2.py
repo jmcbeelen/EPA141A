@@ -1,27 +1,19 @@
-
-
-
 """
 Created on Tue Oct 31 13:18:05 2017
 
 @author: ciullo
 """
-from ema_workbench import ema_logging
 import copy
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-import logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
-log = logging.getLogger(__name__)
 
+from ema_workbench import ema_logging
 
 import funs_generate_network
 from funs_dikes import Lookuplin, dikefailure, init_node
 from funs_economy import cost_fun, discount, cost_evacuation
 from funs_hydrostat import werklijn_cdf, werklijn_inv
-
-
 
 
 def Muskingum(C1, C2, C3, Qn0_t1, Qn0_t0, Qn1_t0):
@@ -32,7 +24,7 @@ def Muskingum(C1, C2, C3, Qn0_t1, Qn0_t0, Qn1_t0):
 
 class DikeNetwork:
     def __init__(self):
-        # Model constants
+        # planning steps
         self.num_planning_steps = 3
         self.num_events = 30
 
@@ -140,9 +132,6 @@ class DikeNetwork:
 
         # Call RfR initialization:
         self._initialize_rfr_ooi(G, dikelist, self.planning_steps)
-
-        log.debug(f"START run: planning_steps={self.planning_steps}, "
-                  f"dikelist={self.dikelist}")
 
         # Load all kwargs into network. Kwargs are uncertainties and levers:
         for item in kwargs:
@@ -341,27 +330,21 @@ class DikeNetwork:
         #hier begint h
 
         # Bereken HRI en GRSI per dijkring, en systeem-breed
-        for s in self.planning_steps:
-            log.debug(f"=== planning step {s} ===")
 
-            # 2a. initialiseer telling voor deze stap
-            appended_this_step = 0
-
-            rfr_year_weights = {0: 1.0, 1: 0.75, 2: 0.5, 3: 0.25}
-            max_rfr = 5
-            max_fat = 5
-            max_dike = 10
-            w1, w2, w3, w4 = 1, 1, 1, 1
+        rfr_year_weights = {0: 1.0, 1: 0.75, 2: 0.5, 3: 0.25}
+        max_rfr = 5
+        max_fat = 5
+        max_dike = 10
+        w1, w2, w3, w4 = 1, 1, 1, 1
 
         # Berekeningen per dijk
-            for dike in self.dikelist:
-                total_dike_increase = 0
-                rfr_coverage = 0
-                fat = 0
-                ead = 0
+        for dike in self.dikelist:
+            total_dike_increase = 0
+            rfr_coverage = 0
+            fat = 0
+            ead = 0
 
-
-
+            for s in self.planning_steps:
                 node = G.nodes[dike]
                 total_dike_increase += node[f"DikeIncrease {s}"]
 
@@ -378,30 +361,22 @@ class DikeNetwork:
                     ead = data[f"{dike}_Expected Annual Damage"][-1]
                     flood_penalty = 1 if ead > 1e7 else 0
 
-                    # Normaliseer en bereken HRI
+                # Normaliseer en bereken HRI
                 hri = (
                         w1 * (rfr_coverage / max_rfr)
                         + w2 * (fat / max_fat)
                         - w3 * (total_dike_increase / max_dike)
                         - w4 * flood_penalty
-                )
+                            )
                 data[f"{dike}_Hydrological Resilience Index"].append(hri)
-                #print("DEBUG HRI append", dike, s, hri)
-                appended_this_step += 1
-                log.debug(f"  {dike}: HRI->len = "
-                          f"{len(data[f'{dike}_Hydrological Resilience Index'])}")
+                print("DEBUG HRI append", dike, s, hri)
 
-        #         # system-wide average for this planning step
-            step_hris = [
-                data[f"{d}_Hydrological Resilience Index"][-1] for d in self.dikelist
-            ]
-            system_hri = np.mean(step_hris)
-            data["Hydrological Resilience Index (system)"].append(system_hri)
-            log.debug(f"System HRI added | len={len(data['Hydrological Resilience Index'])} "
-                      f"| values={step_hris}")
-
-
-
+                # system-wide average for this planning step
+        step_hris = [
+            data[f"{d}_Hydrological Resilience Index"][-1] for d in self.dikelist
+        ]
+        system_hri = np.mean(step_hris)
+        data["Hydrological Resilience Index"].append(system_hri)
 
 
 
@@ -435,17 +410,6 @@ class DikeNetwork:
         data["System Total Outflow"] = sum([data[f"{d}_Total Outflow"] for d in self.dikelist])
         data["System Total Breach Flow"] = sum([data[f"{d}_Total Breach Flow"] for d in self.dikelist])
 
-        log.debug("EINDE run  | HRI-lengtes per dijk en systeem:")
-        for d in self.dikelist:
-            log.debug(f"  {d}: {len(data[f'{d}_Hydrological Resilience Index'])} values")
-        log.debug(f"System: {len(data['Hydrological Resilience Index (system)'])} values")
-
-
-
-
-
-
-
-
         return data
+
 
