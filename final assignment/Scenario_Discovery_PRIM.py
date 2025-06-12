@@ -14,10 +14,6 @@ import matplotlib.pyplot as plt
 from ema_workbench.analysis import prim
 
 
-
-
-
-
 def get_do_nothing_dict():
     return {l.name: 0 for l in model.levers}
 
@@ -26,4 +22,14 @@ if __name__ == "__main__":
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
         results = evaluator.perform_experiments(scenarios=100, policies=[Policy("baseline", **get_do_nothing_dict())] )
 
+        experiments, outcomes = results
 
+        #
+        # hri_ok   = outcomes["Hydrological Resilience Index"][:, :-1, :].min(axis=(1,2)) >= 0
+        # ead_ok   = outcomes["Expected Annual Damage"].sum(axis=1).max(axis=1) < 5e6
+        # rfr_ok   = outcomes["RfR Total Costs"].flatten() < 50e6   # shape (n_exp,)
+        #
+        # y = hri_ok & ead_ok & rfr_ok
+        #
+        # cols_unc           = [c for c in experiments.columns if "_Bmax" in c or "_Brate" in c]
+        # print (cols_unc)
