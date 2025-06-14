@@ -338,8 +338,6 @@ class DikeNetwork:
             data[f"RfR Total Costs"].append(G.nodes[f"RfR_projects {s}"]["cost"])
             data[f"Expected Evacuation Costs"].append(np.sum(EECosts))
 
-        #hier begint h
-
         # Bereken HRI en GRSI per dijkring, en systeem-breed
         for s in self.planning_steps:
             log.debug(f"=== planning step {s} ===")
@@ -353,14 +351,12 @@ class DikeNetwork:
             max_dike = 10
             w1, w2, w3, w4 = 1, 1, 1, 1
 
-        # Berekeningen per dijk
+            # Berekeningen per dijk
             for dike in self.dikelist:
                 total_dike_increase = 0
                 rfr_coverage = 0
                 fat = 0
                 ead = 0
-
-
 
                 node = G.nodes[dike]
                 total_dike_increase += node[f"DikeIncrease {s}"]
@@ -373,7 +369,7 @@ class DikeNetwork:
                             rfr_coverage += 1
                             fat += rfr_year_weights.get(step_num, 0)
 
-                # Pak alleen schade voor deze dijk
+                    # Pak alleen schade voor deze dijk
                 if f"{dike}_Expected Annual Damage" in data:
                     ead = data[f"{dike}_Expected Annual Damage"][-1]
                     flood_penalty = 1 if ead > 1e7 else 0
@@ -384,31 +380,94 @@ class DikeNetwork:
                         + w2 * (fat / max_fat)
                         - w3 * (total_dike_increase / max_dike)
                         - w4 * flood_penalty
-                )
+                    )
                 data[f"{dike}_Hydrological Resilience Index"].append(hri)
-                #print("DEBUG HRI append", dike, s, hri)
+                # print("DEBUG HRI append", dike, s, hri)
                 appended_this_step += 1
                 log.debug(f"  {dike}: HRI->len = "
                           f"{len(data[f'{dike}_Hydrological Resilience Index'])}")
 
-        #         # system-wide average for this planning step
+                #         # system-wide average for this planning step
             step_hris = [
                 data[f"{d}_Hydrological Resilience Index"][-1] for d in self.dikelist
-            ]
+                ]
             system_hri = np.mean(step_hris)
             data["Hydrological Resilience Index (system)"].append(system_hri)
             log.debug(f"System HRI added | len={len(data['Hydrological Resilience Index'])} "
-                      f"| values={step_hris}")
+                          f"| values={step_hris}")
+
+        # === New Aggregated System-Wide HRI Calculation ===
+        total_dike_increase_all = 0
+        total_rfr_coverage_all = 0
+        total_fat_all = 0
+        total_ead_all = 0
+        num_planning_steps = len(self.planning_steps)
 
 
+        flood_penalty_threshold = 5e7  # total EAD threshold
 
+        for dike in self.dikelist:
+            for s in self.planning_steps:
+                node = G.nodes[dike]
+                total_dike_increase_all += node.get(f"DikeIncrease {s}", 0)
 
+            if f"{dike}_Expected Annual Damage" in data:
+                ead_series = data[f"{dike}_Expected Annual Damage"]
+                total_ead_all += sum(ead_series)
 
+        for rfr_node in G.nodes:
+            if rfr_node.startswith("RfR_projects"):
+                cost = G.nodes[rfr_node]["cost"]
+                if cost > 0:
+                    total_rfr_coverage_all += 1
+                    step_num = int(rfr_node.split(" ")[-1])
+                    total_fat_all += rfr_year_weights.get(step_num, 0)
 
+        num_dikes = len(self.dikelist)
+        flood_penalty = 1 if total_ead_all > flood_penalty_threshold else 0
 
+        system_hri_agg = (
+                w1 * (total_rfr_coverage_all / (max_rfr * num_dikes)) +
+                w2 * (total_fat_all / (max_fat * num_dikes)) -
+                w3 * (total_dike_increase_all / (max_dike * num_dikes * num_planning_steps)) -
+                w4 * flood_penalty
+        )
 
+        data["System HRI (aggregate)"] = system_hri_agg
 
+        # Berekeningen per dijk
+        for dike in self.dikelist:
+            total_dike_increase = 0
+            rfr_coverage = 0
+            fat = 0
+            ead = 0
 
+            node = G.nodes[dike]
+            total_dike_increase += node[f"DikeIncrease {s}"]
+
+            for rfr_node in G.nodes:
+                if rfr_node.startswith("RfR_projects"):
+                    step_num = int(rfr_node.split(" ")[-1])
+                    cost = G.nodes[rfr_node]["cost"]
+                    if cost > 0:
+                        rfr_coverage += 1
+                        fat += rfr_year_weights.get(step_num, 0)
+
+                # Pak alleen schade voor deze dijk
+            if f"{dike}_Expected Annual Damage" in data:
+                ead = data[f"{dike}_Expected Annual Damage"][-1]
+                flood_penalty = 1 if ead > 1e7 else 0
+
+                # Normaliseer en bereken HRI
+            hri_per_dike = (
+                    w1 * (rfr_coverage / max_rfr)
+                    + w2 * (fat / max_fat)
+                    - w3 * (total_dike_increase / max_dike)
+                    - w4 * flood_penalty
+            )
+            data[f"{dike}_Hydrological Resilience Index per dike"].append(hri_per_dike)
+            # print("DEBUG HRI append", dike, s, hri)
+            appended_this_step += 1
 
 
         # # === Systeem-brede HRI ===
@@ -416,24 +475,9 @@ class DikeNetwork:
         #             f"{dike}_Hydrological Resilience Index" in data]
         #data["Hydrological Resilience Index"] = np.mean(all_hris) if all_hris else 0
 
-        # === Totale uitstroom per dijk ===
-        for dike in self.dikelist:
-            Qin = G.nodes[dike].get("Qin", [])
-            Qout = G.nodes[dike].get("Qout", [])
-            Qpol = G.nodes[dike].get("Qpol", [])
 
-            total_Qin = np.sum(Qin)
-            total_Qout = np.sum(Qout)
-            total_Qpol = np.sum(Qpol)
 
-            data[f"{dike}_Total Inflow"] = total_Qin
-            data[f"{dike}_Total Outflow"] = total_Qout
-            data[f"{dike}_Total Breach Flow"] = total_Qpol
 
-        # === Systeem-breed totaal (optioneel) ===
-        data["System Total Inflow"] = sum([data[f"{d}_Total Inflow"] for d in self.dikelist])
-        data["System Total Outflow"] = sum([data[f"{d}_Total Outflow"] for d in self.dikelist])
-        data["System Total Breach Flow"] = sum([data[f"{d}_Total Breach Flow"] for d in self.dikelist])
 
         log.debug("EINDE run  | HRI-lengtes per dijk en systeem:")
         for d in self.dikelist:

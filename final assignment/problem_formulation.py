@@ -12,7 +12,7 @@ from ema_workbench import (
     RealParameter,
 )
 from dike_model_function import DikeNetwork  # @UnresolvedImport
-
+from ema_workbench import ScalarOutcome, TimeSeriesOutcome
 import numpy as np
 
 
@@ -279,8 +279,10 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 kind=direction,
             ),
             ScalarOutcome(
-                "Hydrological Resilience Index",
-                kind=ScalarOutcome.MAXIMIZE,
+                "System HRI (aggregate)",
+                variable_name=["System HRI (aggregate)"],
+                function=np.mean,  # it's just one value, mean works fine
+                kind=direction,
             )
 
         ]
@@ -314,8 +316,8 @@ def get_model_for_problem_formulation(problem_formulation_id):
 
             outcomes.append(
                 ScalarOutcome(
-                    f"{dike}_Hydrological Resilience Index",
-                    variable_name=f"{dike}_Hydrological Resilience Index",
+                    f"{dike}_Hydrological Resilience Index per dike",
+                    variable_name=f"{dike}_Hydrological Resilience Index per dike",
                     function=sum_over,
                     kind=ScalarOutcome.MAXIMIZE,
                 )
@@ -414,6 +416,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 "Expected Annual Damage",
                 "Dike Investment Costs",
                 "Expected Number of Deaths",
+                "Hydrological Resilience Index"
             ]:
 
                 o = ArrayOutcome(f"{dike}_{entry}")

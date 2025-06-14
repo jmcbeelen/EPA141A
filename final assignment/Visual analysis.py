@@ -17,16 +17,18 @@ from ema_workbench.analysis import feature_scoring
 ema_logging.log_to_stderr(ema_logging.INFO)
 
 if __name__ == "__main__":
-    model, _ = get_model_for_problem_formulation(1)
+    model, _ = get_model_for_problem_formulation(2)
 
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
-        experiments, outcomes = evaluator.perform_experiments(scenarios=10, policies=10)
+        experiments, outcomes = evaluator.perform_experiments(scenarios=1000, policies=5)
 
     x = experiments
     y = outcomes
 
-    # --- Visualization 1: Pairwise scatterplot grouped by policy ---
-    fig, axes = pairs_plotting.pairs_scatter(x, y, group_by="policy", legend=False)
+    outcomes_to_remove = ["Dike Investment Costs", "RfR Investment Costs"]
+    y_filtered = {k: v for k, v in y.items() if k not in outcomes_to_remove}
+
+    fig, axes = pairs_plotting.pairs_scatter(x, y_filtered, group_by="policy", legend=False)
     fig.set_size_inches(8, 8)
     fig.set_constrained_layout(True)
     plt.show()
@@ -34,7 +36,7 @@ if __name__ == "__main__":
     # Calculate feature importance scores for all outcomes
     # --- Step 1: Compute feature importance scores ---
     x_clean = x.drop(columns=["policy"], errors="ignore")
-    fs = feature_scoring.get_feature_scores_all(x_clean, y)
+    fs = feature_scoring.get_feature_scores_all(x_clean, y_filtered)
 
     lever_names = [l.name for l in model.levers]
     fs_uncertainties_only = fs.drop(index=lever_names, errors="ignore")
@@ -46,13 +48,12 @@ if __name__ == "__main__":
     plt.xlabel("Outcomes")
     plt.ylabel("Uncertainties")
     plt.tight_layout()
+
+    plt.savefig("Feature Importance Score.png", dpi=300)
+
     plt.show()
 
-    print("HRI eerste 10 waarden:", outcomes["Groundwater Recharge Support Index"][:10])
-    print("Gemiddelde HRI:", np.mean(outcomes["Groundwater Recharge Support Index"]))
-    print("Min/max HRI:", np.min(outcomes["Groundwater Recharge Support Index"]),
-          np.max(outcomes["Groundwater Recharge Support Index"]))
-    print(outcomes.keys())
+
 
 
 
