@@ -484,12 +484,5 @@ class DikeNetwork:
             log.debug(f"  {d}: {len(data[f'{d}_Hydrological Resilience Index'])} values")
         log.debug(f"System: {len(data['Hydrological Resilience Index (system)'])} values")
 
-
-
-
-
-
-
-
         return data
 

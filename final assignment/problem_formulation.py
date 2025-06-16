@@ -252,37 +252,37 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 "Expected Annual Damage",
                 variable_name=[var for var in damage_variables],
                 function=sum_over,
-                kind=direction,
+                kind=ScalarOutcome.MINIMIZE,
             ),
             ScalarOutcome(
                 "Dike Investment Costs",
                 variable_name=[var for var in dike_cost_variables],
                 function=sum_over,
-                kind=direction,
+                kind=ScalarOutcome.MINIMIZE,
             ),
             ScalarOutcome(
                 "RfR Investment Costs",
                 variable_name=[var for var in rfr_costs_variables],
                 function=sum_over,
-                kind=direction,
+                kind=ScalarOutcome.MINIMIZE,
             ),
             ScalarOutcome(
                 "Evacuation Costs",
                 variable_name=[var for var in evac_cost_variables],
                 function=sum_over,
-                kind=direction,
+                kind=ScalarOutcome.MINIMIZE,
             ),
             ScalarOutcome(
                 "Expected Number of Deaths",
                 variable_name=[var for var in casuality_varaibles],
                 function=sum_over,
-                kind=direction,
+                kind=ScalarOutcome.MINIMIZE,
             ),
             ScalarOutcome(
                 "System HRI (aggregate)",
                 variable_name=["System HRI (aggregate)"],
                 function=np.mean,  # it's just one value, mean works fine
-                kind=direction,
+                kind=ScalarOutcome.MAXIMIZE,
             )
 
         ]
@@ -290,38 +290,40 @@ def get_model_for_problem_formulation(problem_formulation_id):
     # Disaggregate over locations:
     elif problem_formulation_id == 3:
         outcomes = []
+        dikes_needed = ["A.2"]
 
         for dike in function.dikelist:
-            cost_variables = []
-            for e in ["Expected Annual Damage", "Dike Investment Costs"]:
-                cost_variables.append(f"{dike}_{e}")
+            if dike in dikes_needed:
+                cost_variables = []
+                for e in ["Expected Annual Damage", "Dike Investment Costs"]:
+                    cost_variables.append(f"{dike}_{e}")
 
-            outcomes.append(
-                ScalarOutcome(
-                    f"{dike} Total Costs",
-                    variable_name=[var for var in cost_variables],
-                    function=sum_over,
-                    kind=direction,
+                outcomes.append(
+                    ScalarOutcome(
+                        f"{dike} Total Costs",
+                        variable_name=[var for var in cost_variables],
+                        function=sum_over,
+                        kind=ScalarOutcome.MINIMIZE,
+                    )
                 )
-            )
 
-            outcomes.append(
-                ScalarOutcome(
-                    f"{dike}_Expected Number of Deaths",
-                    variable_name=f"{dike}_Expected Number of Deaths",
-                    function=sum_over,
-                    kind=direction,
+                outcomes.append(
+                    ScalarOutcome(
+                        f"{dike}_Expected Number of Deaths",
+                        variable_name=f"{dike}_Expected Number of Deaths",
+                        function=sum_over,
+                        kind=ScalarOutcome.MINIMIZE,
+                    )
                 )
-            )
 
-            outcomes.append(
-                ScalarOutcome(
-                    f"{dike}_Hydrological Resilience Index per dike",
-                    variable_name=f"{dike}_Hydrological Resilience Index per dike",
-                    function=sum_over,
-                    kind=ScalarOutcome.MAXIMIZE,
+                outcomes.append(
+                    ScalarOutcome(
+                        f"{dike}_HRI per dike",
+                        variable_name=f"{dike}_Hydrological Resilience Index per dike",
+                        function=sum_over,
+                        kind=ScalarOutcome.MAXIMIZE,
+                    )
                 )
-            )
 
 
 
@@ -332,7 +334,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 "RfR Total Costs",
                 variable_name="RfR Total Costs",
                 function=sum_over,
-                kind=direction,
+                kind=ScalarOutcome.MINIMIZE,
             )
         )
         outcomes.append(
@@ -340,7 +342,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 "Expected Evacuation Costs",
                 variable_name="Expected Evacuation Costs",
                 function=sum_over,
-                kind=direction,
+                kind=ScalarOutcome.MINIMIZE,
             )
         )
 

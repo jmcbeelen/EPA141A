@@ -6,7 +6,7 @@ ema_logging.log_to_stderr(ema_logging.INFO)
 
 if __name__ == "__main__":
     # Load the model for a specific problem formulation
-    model, _ = get_model_for_problem_formulation(2)
+    model, _ = get_model_for_problem_formulation(3)
 
     # Run a single experiment
     with MultiprocessingEvaluator(model, n_processes=1) as evaluator:

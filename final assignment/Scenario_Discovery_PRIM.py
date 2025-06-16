@@ -23,7 +23,7 @@ def get_do_nothing_dict():
 
 if __name__ == "__main__":
     model, _ = get_model_for_problem_formulation(5)
-    scenarios=10000
+    scenarios=100
     policies=4
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
         results = evaluator.perform_experiments(scenarios=scenarios, policies=policies )
