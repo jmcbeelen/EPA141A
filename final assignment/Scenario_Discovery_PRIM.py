@@ -21,6 +21,8 @@ from ema_workbench.analysis import dimensional_stacking
 def get_do_nothing_dict():
     return {l.name: 0 for l in model.levers}
 
+
+
 if __name__ == "__main__":
     model, _ = get_model_for_problem_formulation(5)
     scenarios=100
