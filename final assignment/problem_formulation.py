@@ -14,6 +14,8 @@ from ema_workbench import (
 from dike_model_function import DikeNetwork  # @UnresolvedImport
 from ema_workbench import ScalarOutcome, TimeSeriesOutcome
 import numpy as np
+from functools   import partial
+from ema_workbench import Constraint
 
 
 def sum_over(*args):
@@ -33,6 +35,27 @@ def sum_over_time(*args):
     summed = data.sum(axis=0)
     return summed
 
+# helper lives at module level, so worker-processes can pickle it
+def at_most_one_rfr(names, outcomes, decisions):
+    """
+    names: lijst met lever-namen (bijv. ['0_RfR 0', '0_RfR 1', ...])
+    outcomes: dictonary met outcomes (hier niet gebruikt)
+    decisions: dictonary met alle leverwaarden
+    """
+    # tel hoe vaak dit project is gekozen (waarde 1)
+    chosen = sum(decisions[n] for n in names)
+    # regel: max 1 => ≤ 1  ⇒  return <= 0  (positief = overtreding)
+    return chosen - 1          # moet ≤ 0 zijn
+
+# Constraint function
+def max_one_rfr_total(*args):
+            total = float(np.sum(args))  # ensures scalar
+            violation = 0
+            for i in range(0, len(args), 3):
+                group_total = float(np.sum(args[i:i + 3]))
+                if group_total > 1:
+                    violation += group_total - 1
+            return violation
 
 
 
@@ -347,6 +370,41 @@ def get_model_for_problem_formulation(problem_formulation_id):
         )
 
         dike_model.outcomes = outcomes
+
+
+
+        # # ---- RfR constraint: max 1 time step per project -----------------
+        # rfr_constraints = []
+        # for pid in range(5):  # five RfR projects
+        #     lever_names = [f"{pid}_RfR {t}" for t in function.planning_steps]
+        #     rfr_lever_names = [f"{area}_RfR {i}" for area in range(5) for i in range(3)]
+        #     # rfr_constraints.append(
+        #     #     Constraint(
+        #     #         name=f"RFR_once_proj{pid}",
+        #     #         function=partial(at_most_one_rfr),
+        #     #         parameter_names=lever_names  # optional, for clarity
+        #     #     )
+        #
+        #     # Constraint object
+        #     rfr_constraints.append (Constraint(
+        #         "max_one_rfr_total",
+        #         function=max_one_rfr_total,
+        #         parameter_names=rfr_lever_names))
+
+
+
+
+        # Your lever names — make sure they exactly match model.levers
+        rfr_lever_names = [f"{area}_RfR {i}" for area in range(5) for i in range(3)]
+
+
+
+
+
+
+
+        # attach to the model
+        #dike_model.constraints = rfr_constraints
 
     # Disaggregate over time:
     elif problem_formulation_id == 4:
