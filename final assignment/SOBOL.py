@@ -9,19 +9,22 @@ from SALib.analyze import sobol
 from problem_formulation import get_model_for_problem_formulation
 from ema_workbench.analysis import feature_scoring
 
+# === Main Entry Point ===
 if __name__ == "__main__":
 
-    # --- Load model and define zero policy ---
+    # === 1. Load the DikeNetwork model and planning steps ===
+    # Using problem formulation 2
     model, planning_steps = get_model_for_problem_formulation(2)
 
-    #zero_policy_dict = {lever.name: 0 for lever in model.levers}
-    #zero_policy = Policy("zero_policy", **zero_policy_dict)
-
-    # --- Define SALib problem ---
+    # === 2. Define the SALib problem based on model uncertainties ===
+    # This tells SALib which uncertainties to vary and how
     problem = get_SALib_problem(model.uncertainties)
 
-    # --- Run Sobol experiments ---
-    n_scenarios = 10 # Must be a power of 2
+    # === 3. Run Sobol sensitivity experiments ===
+    # Sobol sampling requires the number of scenarios to be a power of 2
+    n_scenarios = 20
+
+    # Perform experiments using 5 policies across the Sobol-sampled scenarios
     with MultiprocessingEvaluator(model, n_processes=-1) as evaluator:
         experiments, outcomes = evaluator.perform_experiments(
             scenarios=n_scenarios,
@@ -29,12 +32,15 @@ if __name__ == "__main__":
             uncertainty_sampling=Samplers.SOBOL
         )
 
-    # --- Analyze an outcome (e.g. Expected Annual Damage) ---
+    # === 4. Analyze sensitivity for a specific outcome ===
+    # Select the outcome to analyze (can be changed as needed)
     Y = outcomes["System HRI (aggregate)"]
 
+    # Run Sobol sensitivity analysis
     Si = sobol.analyze(problem, Y, calc_second_order=True, print_to_console=True)
 
-    # --- Visualize ---
+    # === 5. Prepare results for visualization ===
+    # Create a dataframe to store first-order and total-order indices + confidence intervals
     df = pd.DataFrame({
         "First Order": Si["S1"],
         "First Order Conf": Si["S1_conf"],
@@ -42,19 +48,21 @@ if __name__ == "__main__":
         "Total Order Conf": Si["ST_conf"]
     }, index=problem["names"])
 
+    # === 6. Plot Sobol indices ===
     df[["First Order", "Total Order"]].plot(
-    kind="bar",
-    yerr=df[["First Order Conf", "Total Order Conf"]].values.T,  # Add this
-    figsize=(12, 6)
-)
+        kind="bar",
+        yerr=df[["First Order Conf", "Total Order Conf"]].values.T,  # Add confidence intervals
+        figsize=(12, 6)
+    )
+
     plt.title("System HRI (aggregate)")
     plt.ylabel("Sobol Index")
     plt.xticks(rotation=90)
     plt.grid(True)
     plt.tight_layout()
 
+    # === 7. Save and show the figure ===
     plt.savefig("System HRI (aggregate).png", dpi=300)
-
     plt.show()
 
 

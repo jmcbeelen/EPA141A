@@ -23,6 +23,9 @@ Below is a list of files that we either created ourselves or modified significan
 | `SOBOL.py`               | File with the SOBOL analysis.                                                                                    |
 | `MORDM.ipynb`            | This is the biggest file made. In this notebook the two MORDM's are executed together with the scenario analysis |
 |                          | and the analysis to test the robustness. All the visualization of those analysis are also produced here          | 
+| `Files for ourself`      | This folder contains exploratory scripts and analysis attempts used during our development process.              |
+|                          | While not essential for running or understanding the final model, we chose to keep these files for transparency, |
+|                          | and future reference.                                                                                            |
                                                                                                  
 
 ---
